@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Perfumery.Application\Perfumery.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Materials\materials.era1.json" LogicalName="Perfumery.Infrastructure.Materials.materials.era1.json" />
+    <EmbeddedResource Include="Evaluation\evaluation.json" LogicalName="Perfumery.Infrastructure.Evaluation.evaluation.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Perfumery.Infrastructure.UnitTests" />
+  </ItemGroup>
+</Project>

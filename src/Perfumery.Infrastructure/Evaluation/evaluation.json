@@ -1,0 +1,5 @@
+{
+  "perceptionExponent": 0.5,
+  "checkpointMinutes": [0, 15, 60, 240, 1440],
+  "topContributorCount": 3
+}

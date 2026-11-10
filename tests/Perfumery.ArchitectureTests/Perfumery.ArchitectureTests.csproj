@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Perfumery.Infrastructure\Perfumery.Infrastructure.csproj" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+</Project>

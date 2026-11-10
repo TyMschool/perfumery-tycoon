@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Perfumery.SharedKernel\Perfumery.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>
