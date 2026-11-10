@@ -3,5 +3,6 @@
     <ProjectReference Include="..\..\src\Perfumery.Infrastructure\Perfumery.Infrastructure.csproj" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
   </ItemGroup>
 </Project>

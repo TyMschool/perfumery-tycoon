@@ -1,4 +1,5 @@
 using FluentValidation;
+using Perfumery.Application.Abstractions.Catalogs;
 using Perfumery.Application.Abstractions.Materials;
 using Perfumery.Application.Abstractions.Messaging;
 using Perfumery.Application.Abstractions.Persistence;
@@ -22,6 +23,7 @@ internal sealed class EvaluateFormulaQueryValidator : AbstractValidator<Evaluate
 internal sealed class EvaluateFormulaQueryHandler(
     IFormulaRepository formulas,
     IMaterialCatalog catalog,
+    ISupplyCatalog supplies,
     ScentEvaluator evaluator)
     : IQueryHandler<EvaluateFormulaQuery, Result<ScentProfileResponse>>
 {
@@ -46,7 +48,13 @@ internal sealed class EvaluateFormulaQueryHandler(
             materials[material.Id] = material;
         }
 
-        var profile = evaluator.Evaluate(formula, materials);
+        var composition = formula.Compose();
+        if (composition.IsFailure)
+        {
+            return composition.Error;
+        }
+
+        var profile = evaluator.Evaluate(composition.Value, materials, supplies.Spirit.Price);
         if (profile.IsFailure)
         {
             return profile.Error;
@@ -57,7 +65,7 @@ internal sealed class EvaluateFormulaQueryHandler(
             formula.Name,
             formula.Revision,
             profile.Value.CostPerKgOfConcentrate.Amount,
-            formula.SolventFraction,
+            composition.Value.SolventFraction,
             [.. profile.Value.Checkpoints.Select(checkpoint => ToResponse(checkpoint, materials))]);
     }
 

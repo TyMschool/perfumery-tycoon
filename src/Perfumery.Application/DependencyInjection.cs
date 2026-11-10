@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Perfumery.Application.Abstractions.Behaviors;
 using Perfumery.Application.Abstractions.Messaging;
+using Perfumery.Application.Game;
 
 namespace Perfumery.Application;
 
@@ -9,7 +10,7 @@ public static class DependencyInjection
 {
     /// <summary>
     /// Registers every handler and validator in this assembly, wrapped as
-    /// logging → validation → handler. Requires logging to be registered by the host.
+    /// logging → validation → save → handler. Requires logging to be registered by the host.
     /// </summary>
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
@@ -25,6 +26,11 @@ public static class DependencyInjection
             .AsImplementedInterfaces()
             .WithScopedLifetime());
 
+        services.AddScoped<StockItemDirectory>();
+        services.AddScoped<GameRestorer>();
+
+        // Decorators wrap outward in the order listed: save is innermost, logging outermost.
+        services.Decorate(typeof(ICommandHandler<,>), typeof(SaveGameDecorator<,>));
         services.Decorate(typeof(ICommandHandler<,>), typeof(ValidationCommandHandlerDecorator<,>));
         services.Decorate(typeof(IQueryHandler<,>), typeof(ValidationQueryHandlerDecorator<,>));
         services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingCommandHandlerDecorator<,>));

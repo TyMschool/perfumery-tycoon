@@ -1,0 +1,12 @@
+[
+  { "id": "spirit-of-wine", "name": "Spirit of wine", "kind": "solvent", "unit": "kilogram", "price": 3 },
+  { "id": "lavender-flowering-tops", "name": "Lavender flowering tops", "kind": "rawBotanical", "unit": "kilogram", "price": 0.25 },
+  { "id": "rosemary-flowering-tops", "name": "Rosemary flowering tops", "kind": "rawBotanical", "unit": "kilogram", "price": 0.14 },
+  { "id": "bitter-orange-leaves", "name": "Bitter orange leaves and twigs", "kind": "rawBotanical", "unit": "kilogram", "price": 0.13 },
+  { "id": "bitter-orange-blossom", "name": "Bitter orange blossom", "kind": "rawBotanical", "unit": "kilogram", "price": 0.65 },
+  { "id": "benzoin-resin", "name": "Benzoin resin", "kind": "rawBotanical", "unit": "kilogram", "price": 30 },
+  { "id": "tonka-beans", "name": "Tonka beans", "kind": "rawBotanical", "unit": "kilogram", "price": 80 },
+  { "id": "flacon-cologne-200g", "name": "Cologne flacon, 200 g", "kind": "packaging", "unit": "each", "price": 0.40 },
+  { "id": "flacon-toilet-water-100g", "name": "Toilet water flacon, 100 g", "kind": "packaging", "unit": "each", "price": 0.30 },
+  { "id": "flacon-extrait-30g", "name": "Extrait flacon, 30 g", "kind": "packaging", "unit": "each", "price": 0.50 }
+]

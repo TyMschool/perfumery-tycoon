@@ -77,7 +77,7 @@ public class ArchitectureTests
             .Where(type => !type.Namespace!.EndsWith(".Messaging"))
             .ToArray();
 
-        applicationInterfaces.Length.ShouldBe(2);
+        applicationInterfaces.Length.ShouldBe(9);
 
         foreach (var contract in applicationInterfaces)
         {
@@ -95,7 +95,7 @@ public class ArchitectureTests
             .Or()
             .ImplementInterface(typeof(IQueryHandler<,>));
 
-        handlers.GetTypes().Count().ShouldBeGreaterThanOrEqualTo(7);
+        handlers.GetTypes().Count(type => type.Name.EndsWith("Handler")).ShouldBe(20);
         ShouldHold(handlers.Should().BeSealed().And().NotBePublic().GetResult());
     }
 
@@ -108,7 +108,7 @@ public class ArchitectureTests
             .Where(type => ImplementsOpenGeneric(type, typeof(ICommand<>)) || ImplementsOpenGeneric(type, typeof(IQuery<>)))
             .ToArray();
 
-        requests.Length.ShouldBe(7);
+        requests.Length.ShouldBe(20);
         foreach (var request in requests)
         {
             types.Count(type => type.Name == $"{request.Name}Handler").ShouldBe(1, $"{request.Name} needs one handler");
@@ -141,6 +141,8 @@ public class ArchitectureTests
             .AreClasses()
             .And()
             .AreNotAbstract()
+            .And()
+            .AreNotStatic()
             .Should()
             .BeSealed()
             .GetResult());
@@ -157,6 +159,86 @@ public class ArchitectureTests
             .And()
             .HaveNameEndingWith("DomainEvent")
             .GetResult());
+    }
+
+    [Fact]
+    public void Domain_and_Application_never_read_a_clock()
+    {
+        string[] forbidden =
+        [
+            "System.DateTime::get_Now",
+            "System.DateTime::get_UtcNow",
+            "System.DateTime::get_Today",
+            "System.DateTimeOffset::get_Now",
+            "System.DateTimeOffset::get_UtcNow",
+            "System.TimeProvider::get_System",
+            "System.Diagnostics.Stopwatch::",
+            "System.Environment::get_TickCount",
+        ];
+
+        foreach (var assembly in new[] { SharedKernelAssembly, DomainAssembly, ApplicationAssembly })
+        {
+            using var module = Mono.Cecil.ModuleDefinition.ReadModule(assembly.Location);
+            var offenders = module.GetTypes()
+                .SelectMany(type => type.Methods)
+                .Where(method => method.HasBody)
+                .SelectMany(method => method.Body.Instructions
+                    .Select(instruction => instruction.Operand)
+                    .OfType<Mono.Cecil.MethodReference>()
+                    .Where(called => forbidden.Any(name => called.FullName.Contains(name)))
+                    .Select(called => $"{method.FullName} calls {called.FullName}"));
+
+            offenders.ShouldBeEmpty();
+        }
+    }
+
+    [Fact]
+    public void The_clock_check_can_see_a_clock_being_read()
+    {
+        // Infrastructure is where the clock lives, so the same scan must find something there.
+        using var module = Mono.Cecil.ModuleDefinition.ReadModule(InfrastructureAssembly.Location);
+
+        module.GetTypes()
+            .SelectMany(type => type.Methods)
+            .Where(method => method.HasBody)
+            .SelectMany(method => method.Body.Instructions.Select(instruction => instruction.Operand))
+            .OfType<Mono.Cecil.MethodReference>()
+            .ShouldContain(called => called.FullName.Contains("System.TimeProvider::"));
+    }
+
+    [Fact]
+    public void Snapshot_types_are_plain_data_with_no_behavior_beyond_conversion()
+    {
+        var snapshots = DomainAssembly.GetTypes()
+            .Concat(ApplicationAssembly.GetTypes())
+            .Where(type => type.Name.EndsWith("Snapshot") && !type.IsNested)
+            .ToArray();
+
+        snapshots.Length.ShouldBeGreaterThanOrEqualTo(10);
+        foreach (var snapshot in snapshots)
+        {
+            snapshot.IsSealed.ShouldBeTrue(snapshot.Name);
+            snapshot.GetFields(BindingFlags.Public | BindingFlags.Instance).ShouldBeEmpty(snapshot.Name);
+
+            // Records synthesize equality, printing, cloning and deconstruction; anything else is behavior.
+            var declared = snapshot.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                .Where(method => !method.IsSpecialName)
+                .Select(method => method.Name)
+                .Except(["Equals", "GetHashCode", "ToString", "Deconstruct", "<Clone>$", "From", "ToComposition"])
+                .ToArray();
+
+            declared.ShouldBeEmpty(snapshot.Name);
+        }
+    }
+
+    [Fact]
+    public void Domain_services_are_static_and_so_hold_no_session_catalog_or_clock()
+    {
+        var services = DomainAssembly.GetTypes().Where(type => type.Name.EndsWith("Service")).ToArray();
+
+        services.Select(type => type.Name).ShouldBe(
+            ["PurchasingService", "ExtractionService", "CompoundingService", "BottlingService"], ignoreOrder: true);
+        services.ShouldAllBe(type => type.IsAbstract && type.IsSealed);
     }
 
     private static bool IsEntity(Type type)

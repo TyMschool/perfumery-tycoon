@@ -1,11 +1,12 @@
 using Perfumery.Domain.Formulas;
+using Perfumery.Infrastructure.Game;
 using Perfumery.Infrastructure.Persistence;
 
 namespace Perfumery.Infrastructure.UnitTests;
 
 public class InMemoryFormulaRepositoryTests
 {
-    private readonly InMemoryFormulaRepository _repository = new();
+    private readonly InMemoryFormulaRepository _repository = new(new InMemoryGameSession());
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 

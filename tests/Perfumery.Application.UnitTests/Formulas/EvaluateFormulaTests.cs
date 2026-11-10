@@ -15,7 +15,7 @@ public class EvaluateFormulaTests
 
     public EvaluateFormulaTests()
     {
-        _handler = new EvaluateFormulaQueryHandler(_formulas, _catalog, new ScentEvaluator(EvaluationSettings.Default));
+        _handler = new EvaluateFormulaQueryHandler(_formulas, _catalog, new FakeSupplyCatalog(), new ScentEvaluator(EvaluationSettings.Default));
     }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -31,7 +31,8 @@ public class EvaluateFormulaTests
         profile.FormulaId.ShouldBe(formula.Id.Value);
         profile.FormulaName.ShouldBe("Rose water");
         profile.Revision.ShouldBe(3);
-        profile.CostPerKgOfConcentrate.ShouldBe(140m);
+        // 140 of materials plus 45% carrier at 3 francs per kg.
+        profile.CostPerKgOfConcentrate.ShouldBe(141.35m);
         profile.SolventFraction.ShouldBe(0.45m);
         profile.Checkpoints.Select(checkpoint => checkpoint.ElapsedMinutes).ShouldBe([0d, 15d, 60d, 240d, 1440d]);
 

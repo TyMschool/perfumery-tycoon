@@ -1,3 +1,4 @@
+using Perfumery.Domain.Common;
 using Perfumery.Domain.Evaluation;
 using Perfumery.Domain.Formulas;
 using Perfumery.Domain.Materials;
@@ -17,7 +18,7 @@ public class ScentEvaluatorTests
     {
         var formula = Formula.Create("Empty").Value;
 
-        _evaluator.Evaluate(formula, Materials).Error.ShouldBe(FormulaErrors.EmptyFormula);
+        Evaluate(formula, Materials).Error.ShouldBe(FormulaErrors.EmptyFormula);
     }
 
     [Fact]
@@ -26,13 +27,13 @@ public class ScentEvaluatorTests
         var formula = Formula.Create("Orphan").Value;
         formula.AddLine(Bergamot, Parts(10m));
 
-        _evaluator.Evaluate(formula, Lookup(Lemon)).Error.Code.ShouldBe("Material.NotFound");
+        Evaluate(formula, Lookup(Lemon)).Error.Code.ShouldBe("Material.NotFound");
     }
 
     [Fact]
     public void The_profile_has_the_five_checkpoints_in_order()
     {
-        var profile = _evaluator.Evaluate(EauDeCologne(), Materials).Value;
+        var profile = Evaluate(EauDeCologne(), Materials).Value;
 
         profile.Checkpoints.Select(checkpoint => checkpoint.Elapsed).ShouldBe(
         [
@@ -47,7 +48,7 @@ public class ScentEvaluatorTests
     [Fact]
     public void Facet_shapes_sum_to_1_and_at_most_three_contributors_are_listed()
     {
-        var profile = _evaluator.Evaluate(EauDeCologne(), Materials).Value;
+        var profile = Evaluate(EauDeCologne(), Materials).Value;
 
         foreach (var checkpoint in profile.Checkpoints)
         {
@@ -62,7 +63,7 @@ public class ScentEvaluatorTests
     [Fact]
     public void An_eau_de_cologne_opens_citrus_and_has_mostly_faded_by_four_hours()
     {
-        var profile = _evaluator.Evaluate(EauDeCologne(), Materials).Value;
+        var profile = Evaluate(EauDeCologne(), Materials).Value;
 
         At(profile, TimeSpan.Zero).DominantFacet.ShouldBe(Facet.Citrus);
         At(profile, TimeSpan.FromMinutes(15)).DominantFacet.ShouldBe(Facet.Citrus);
@@ -74,7 +75,7 @@ public class ScentEvaluatorTests
     [Fact]
     public void Intensity_never_rises_over_time()
     {
-        var profile = _evaluator.Evaluate(EauDeCologne(), Materials).Value;
+        var profile = Evaluate(EauDeCologne(), Materials).Value;
 
         profile.Checkpoints
             .Select(checkpoint => checkpoint.TotalIntensity)
@@ -84,12 +85,12 @@ public class ScentEvaluatorTests
     [Fact]
     public void Sandalwood_and_vetiver_make_the_drydown_woody()
     {
-        var plain = _evaluator.Evaluate(EauDeCologne(), Materials).Value;
+        var plain = Evaluate(EauDeCologne(), Materials).Value;
 
         var based = EauDeCologne();
         based.AddLine(Sandalwood, Parts(10m));
         based.AddLine(Vetiver, Parts(5m));
-        var profile = _evaluator.Evaluate(based, Materials).Value;
+        var profile = Evaluate(based, Materials).Value;
 
         At(plain, TimeSpan.FromHours(24)).DominantFacet.ShouldNotBe(Facet.Woody);
         At(profile, TimeSpan.FromHours(24)).DominantFacet.ShouldBe(Facet.Woody);
@@ -106,7 +107,7 @@ public class ScentEvaluatorTests
             formula.AddLine(Lemon, Parts(10m));
             formula.AddLine(Rosemary, Parts(parts));
 
-            return At(_evaluator.Evaluate(formula, Materials).Value, TimeSpan.Zero)
+            return At(Evaluate(formula, Materials).Value, TimeSpan.Zero)
                 .TopContributors.Single(contributor => contributor.MaterialId == Rosemary.Id)
                 .Share;
         }
@@ -127,7 +128,7 @@ public class ScentEvaluatorTests
             formula.AddLine(RoseOtto, Parts(10m), Percent(percent));
             formula.AddLine(Bergamot, Parts(10m));
 
-            return At(_evaluator.Evaluate(formula, Materials).Value, TimeSpan.Zero)
+            return At(Evaluate(formula, Materials).Value, TimeSpan.Zero)
                 .TopContributors.Single(contributor => contributor.MaterialId == RoseOtto.Id)
                 .PerceivedIntensity;
         }
@@ -140,8 +141,8 @@ public class ScentEvaluatorTests
     {
         var formula = EauDeCologne();
 
-        var first = _evaluator.Evaluate(formula, Materials).Value;
-        var second = _evaluator.Evaluate(formula, Materials).Value;
+        var first = Evaluate(formula, Materials).Value;
+        var second = Evaluate(formula, Materials).Value;
 
         second.CostPerKgOfConcentrate.ShouldBe(first.CostPerKgOfConcentrate);
         second.Checkpoints.Count.ShouldBe(first.Checkpoints.Count);
@@ -161,7 +162,7 @@ public class ScentEvaluatorTests
         formula.AddLine(Bergamot, Parts(10m));
         formula.AddLine(RoseOtto, Parts(10m), Percent(10m));
 
-        _evaluator.Evaluate(formula, Materials).Value.CostPerKgOfConcentrate.Amount.ShouldBe(140m);
+        Evaluate(formula, Materials).Value.CostPerKgOfConcentrate.Amount.ShouldBe(140m);
     }
 
     [Fact]
@@ -171,7 +172,7 @@ public class ScentEvaluatorTests
         var formula = Formula.Create("Rosemary water").Value;
         formula.AddLine(Rosemary, Parts(1m));
 
-        var profile = _evaluator.Evaluate(formula, Materials).Value;
+        var profile = Evaluate(formula, Materials).Value;
 
         At(profile, TimeSpan.Zero).TotalIntensity.ShouldBe(Math.Sqrt(1.5), 1e-12);
         At(profile, TimeSpan.FromHours(1)).TotalIntensity.ShouldBe(Math.Sqrt(1.5 * 0.5), 1e-12);
@@ -218,11 +219,35 @@ public class ScentEvaluatorTests
         formula.AddLine(Bergamot, Parts(10m));
         formula.AddLine(Sandalwood, Parts(10m));
 
-        var checkpoint = linear.Evaluate(formula, Materials).Value.Checkpoints.Single();
+        var checkpoint = Evaluate(formula, Materials, linear).Value.Checkpoints.Single();
 
         // Bergamot strength 1.0 against sandalwood 0.8 at equal neat fractions.
         checkpoint.TopContributors[0].MaterialId.ShouldBe(Bergamot.Id);
         checkpoint.TopContributors[0].Share.ShouldBe(1.0 / 1.8, 1e-12);
+    }
+
+    private Perfumery.SharedKernel.Result<ScentProfile> Evaluate(
+        Formula formula,
+        IReadOnlyDictionary<MaterialId, Material> materials,
+        ScentEvaluator? evaluator = null)
+    {
+        var composition = formula.Compose();
+        return composition.IsFailure
+            ? composition.Error
+            : (evaluator ?? _evaluator).Evaluate(composition.Value, materials, Money.Zero);
+    }
+
+    [Fact]
+    public void The_carrier_adds_its_cost_to_the_concentrate()
+    {
+        // 10 parts bergamot neat + 10 parts rose otto at 10%: 45% carrier at 3 francs per kg.
+        var formula = Formula.Create("Rose and bergamot").Value;
+        formula.AddLine(Bergamot, Parts(10m));
+        formula.AddLine(RoseOtto, Parts(10m), Percent(10m));
+
+        var profile = _evaluator.Evaluate(formula.Compose().Value, Materials, Money.Create(3m).Value).Value;
+
+        profile.CostPerKgOfConcentrate.Amount.ShouldBe(140m + (0.45m * 3m));
     }
 
     private static Formula EauDeCologne()

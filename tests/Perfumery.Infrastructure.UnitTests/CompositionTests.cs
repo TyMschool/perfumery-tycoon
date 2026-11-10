@@ -2,7 +2,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Perfumery.Application;
 using Perfumery.Application.Abstractions.Messaging;
+using Perfumery.Application.Ateliers.GetAtelier;
 using Perfumery.Application.Formulas.AddFormulaLine;
+using Perfumery.Application.Game.LoadGame;
+using Perfumery.Application.Game.StartNewGame;
+using Perfumery.Application.Production.BottleProductRun;
+using Perfumery.Application.Production.CollectExtraction;
+using Perfumery.Application.Production.CompoundConcentrate;
+using Perfumery.Application.Production.GetProduction;
+using Perfumery.Application.Production.QuoteProduction;
+using Perfumery.Application.Production.StartExtraction;
+using Perfumery.Application.Production.StartProductRun;
+using Perfumery.Application.Stock.GetInventory;
+using Perfumery.Application.Stock.GetShelf;
+using Perfumery.Application.Stock.PurchaseSupplies;
+using Perfumery.Domain.Production;
 using Perfumery.Application.Formulas.AdjustLineParts;
 using Perfumery.Application.Formulas.ChangeLineDilution;
 using Perfumery.Application.Formulas.CreateFormula;
@@ -30,7 +44,7 @@ public sealed class CompositionTests : IDisposable
         _provider = new ServiceCollection()
             .AddLogging()
             .AddApplication()
-            .AddInfrastructure()
+            .AddInfrastructure(options => options.InMemory = true)
             .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = true });
         _scope = _provider.CreateScope();
     }
@@ -55,6 +69,19 @@ public sealed class CompositionTests : IDisposable
             Command<RemoveFormulaLineCommand, Result>(),
             Query<EvaluateFormulaQuery, Result<ScentProfileResponse>>(),
             Query<GetMaterialsQuery, Result<IReadOnlyList<MaterialResponse>>>(),
+            Command<StartNewGameCommand, Result>(),
+            Command<LoadGameCommand, Result<LoadGameOutcome>>(),
+            Command<PurchaseSuppliesCommand, Result>(),
+            Command<StartExtractionCommand, Result<ExtractionRunId>>(),
+            Command<CollectExtractionCommand, Result>(),
+            Command<CompoundConcentrateCommand, Result<ConcentrateBatchId>>(),
+            Command<StartProductRunCommand, Result<ProductRunId>>(),
+            Command<BottleProductRunCommand, Result>(),
+            Query<GetAtelierQuery, Result<AtelierResponse>>(),
+            Query<GetInventoryQuery, Result<IReadOnlyList<StockLineResponse>>>(),
+            Query<GetProductionQuery, Result<ProductionResponse>>(),
+            Query<GetShelfQuery, Result<IReadOnlyList<ShelfLotResponse>>>(),
+            Query<QuoteProductionQuery, Result<ProductionQuoteResponse>>(),
         ];
 
         handlers.ShouldAllBe(handler => handler.GetType().Name.StartsWith("Logging"));
@@ -122,7 +149,7 @@ public sealed class CompositionTests : IDisposable
         // 30 parts bergamot neat + 10 parts rose otto at 20%: neat fractions 0.75 and 0.05.
         profile.Revision.ShouldBe(7);
         profile.SolventFraction.ShouldBe(0.2m);
-        profile.CostPerKgOfConcentrate.ShouldBe(0.75m * 40m + 0.05m * 2400m);
+        profile.CostPerKgOfConcentrate.ShouldBe((0.75m * 40m) + (0.05m * 2400m) + (0.2m * 3m));
         profile.Checkpoints.Count.ShouldBe(5);
     }
 

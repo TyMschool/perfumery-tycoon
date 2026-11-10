@@ -1,3 +1,4 @@
+using Perfumery.Domain.Common;
 using Perfumery.Domain.Formulas;
 using Perfumery.Domain.Materials;
 using Perfumery.SharedKernel;
@@ -5,7 +6,7 @@ using Perfumery.SharedKernel;
 namespace Perfumery.Domain.Evaluation;
 
 /// <summary>
-/// Pure domain service: turns a formula and its materials into a <see cref="ScentProfile"/>.
+/// Pure domain service: turns a composition and its materials into a <see cref="ScentProfile"/>.
 /// Known simplifications: no masking, synergy or anosmia; facets add linearly.
 /// </summary>
 public sealed class ScentEvaluator
@@ -18,25 +19,26 @@ public sealed class ScentEvaluator
         _settings = settings;
     }
 
-    public Result<ScentProfile> Evaluate(Formula formula, IReadOnlyDictionary<MaterialId, Material> materials)
+    /// <param name="composition">The frozen formula to evaluate.</param>
+    /// <param name="materials">Every material the composition names.</param>
+    /// <param name="carrierCostPerKg">What the carrier costs, for the cost per kg of concentrate.</param>
+    public Result<ScentProfile> Evaluate(
+        Composition composition,
+        IReadOnlyDictionary<MaterialId, Material> materials,
+        Money carrierCostPerKg)
     {
-        ArgumentNullException.ThrowIfNull(formula);
+        ArgumentNullException.ThrowIfNull(composition);
         ArgumentNullException.ThrowIfNull(materials);
 
-        if (formula.IsEmpty)
-        {
-            return FormulaErrors.EmptyFormula;
-        }
-
-        var cost = formula.CostPerKgOfConcentrate(materials);
+        var cost = composition.CostPerKg(materials, carrierCostPerKg);
         if (cost.IsFailure)
         {
             return cost.Error;
         }
 
         // Cost succeeding means every line's material is present.
-        var inputs = formula.Lines
-            .Select(line => new LineInput(materials[line.MaterialId], (double)formula.NeatFraction(line.MaterialId).Value))
+        var inputs = composition.Lines
+            .Select(line => new LineInput(materials[line.MaterialId], (double)line.NeatFraction))
             .ToArray();
 
         var checkpoints = _settings.Checkpoints.Select(elapsed => EvaluateAt(elapsed, inputs)).ToArray();

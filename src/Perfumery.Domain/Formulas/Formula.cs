@@ -1,4 +1,3 @@
-using Perfumery.Domain.Common;
 using Perfumery.Domain.Materials;
 using Perfumery.SharedKernel;
 
@@ -137,23 +136,77 @@ public sealed class Formula : AggregateRoot<FormulaId>
         return line is null ? FormulaErrors.LineNotFound(materialId) : NeatFractionOf(line);
     }
 
-    /// <summary>Sum over lines of neat fraction × the material's cost per kg neat. The carrier is treated as free.</summary>
-    public Result<Money> CostPerKgOfConcentrate(IReadOnlyDictionary<MaterialId, Material> materials)
+    /// <summary>Freezes the formula as it stands into an immutable composition.</summary>
+    public Result<Composition> Compose() =>
+        IsEmpty
+            ? FormulaErrors.EmptyFormula
+            : Composition.Create(_lines.Select(line => new CompositionLine(line.MaterialId, NeatFractionOf(line))));
+
+    /// <summary>Points at the current revision.</summary>
+    public FormulaRevisionRef CurrentRevision => FormulaRevisionRef.Create(Id, Revision).Value;
+
+    public FormulaSnapshot ToSnapshot() =>
+        new(
+            Id.Value,
+            Name,
+            Revision,
+            [.. _lines.Select(line => new FormulaLineSnapshot(line.MaterialId.Value, line.Parts.Value, line.Dilution.Fraction))]);
+
+    /// <summary>Rebuilds a formula from saved state, re-checking every invariant. Raises no events.</summary>
+    public static Result<Formula> Restore(FormulaSnapshot snapshot)
     {
-        ArgumentNullException.ThrowIfNull(materials);
+        ArgumentNullException.ThrowIfNull(snapshot);
 
-        var total = Money.Zero;
-        foreach (var line in _lines)
+        if (string.IsNullOrWhiteSpace(snapshot.Name))
         {
-            if (!materials.TryGetValue(line.MaterialId, out var material))
-            {
-                return MaterialErrors.NotFound(line.MaterialId);
-            }
-
-            total += material.CostPerKg.Times(NeatFractionOf(line));
+            return FormulaErrors.NameRequired;
         }
 
-        return total;
+        if (snapshot.Name.Length > MaxNameLength)
+        {
+            return FormulaErrors.NameTooLong;
+        }
+
+        if (snapshot.Revision < 1)
+        {
+            return FormulaErrors.InvalidRevision;
+        }
+
+        if (snapshot.Lines.Count > MaxLines)
+        {
+            return FormulaErrors.TooManyLines;
+        }
+
+        var formula = new Formula(new FormulaId(snapshot.Id), snapshot.Name) { Revision = snapshot.Revision };
+        foreach (var line in snapshot.Lines)
+        {
+            var materialId = MaterialId.Create(line.MaterialId);
+            if (materialId.IsFailure)
+            {
+                return materialId.Error;
+            }
+
+            var parts = Parts.Create(line.Parts);
+            if (parts.IsFailure)
+            {
+                return parts.Error;
+            }
+
+            var dilution = Dilution.FromFraction(line.DilutionFraction);
+            if (dilution.IsFailure)
+            {
+                return dilution.Error;
+            }
+
+            if (formula.FindLine(materialId.Value) is not null)
+            {
+                return FormulaErrors.MaterialAlreadyPresent(materialId.Value);
+            }
+
+            formula._lines.Add(new FormulaLine(materialId.Value, parts.Value, dilution.Value));
+        }
+
+        return formula;
     }
 
     private decimal NeatFractionOf(FormulaLine line) => line.NeatParts / TotalParts;

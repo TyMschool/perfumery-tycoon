@@ -8,6 +8,10 @@
   <ItemGroup>
     <EmbeddedResource Include="Materials\materials.era1.json" LogicalName="Perfumery.Infrastructure.Materials.materials.era1.json" />
     <EmbeddedResource Include="Evaluation\evaluation.json" LogicalName="Perfumery.Infrastructure.Evaluation.evaluation.json" />
+    <EmbeddedResource Include="Stock\supplies.era1.json" LogicalName="Perfumery.Infrastructure.Stock.supplies.era1.json" />
+    <EmbeddedResource Include="Production\extraction.era1.json" LogicalName="Perfumery.Infrastructure.Production.extraction.era1.json" />
+    <EmbeddedResource Include="Production\products.era1.json" LogicalName="Perfumery.Infrastructure.Production.products.era1.json" />
+    <EmbeddedResource Include="Ateliers\atelier.era1.json" LogicalName="Perfumery.Infrastructure.Ateliers.atelier.era1.json" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Perfumery.Infrastructure.UnitTests" />
