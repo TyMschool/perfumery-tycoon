@@ -17,6 +17,9 @@ public static class FormulaErrors
     public static readonly Error EmptyFormula =
         Error.Validation("Formula.Empty", "A formula with no lines cannot be evaluated.");
 
+    public static readonly Error InvalidRevision =
+        Error.Validation("Formula.InvalidRevision", "A formula revision is at least 1.");
+
     public static Error MaterialAlreadyPresent(MaterialId materialId) =>
         Error.Conflict(
             "Formula.MaterialAlreadyPresent",

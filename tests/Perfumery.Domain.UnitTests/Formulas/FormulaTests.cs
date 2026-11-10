@@ -1,3 +1,4 @@
+using Perfumery.Domain.Common;
 using Perfumery.Domain.Formulas;
 using Perfumery.Domain.Materials;
 using static Perfumery.Domain.UnitTests.TestMaterials;
@@ -191,7 +192,7 @@ public class FormulaTests
         formula.AddLine(Bergamot, Parts(10m));
         formula.AddLine(RoseOtto, Parts(10m), Percent(10m));
 
-        var cost = formula.CostPerKgOfConcentrate(Lookup(Bergamot, RoseOtto));
+        var cost = formula.Compose().Value.CostPerKg(Lookup(Bergamot, RoseOtto), Money.Zero);
 
         cost.Value.Amount.ShouldBe(140m);
     }
@@ -202,8 +203,70 @@ public class FormulaTests
         var formula = NewFormula();
         formula.AddLine(Bergamot, Parts(10m));
 
-        formula.CostPerKgOfConcentrate(Lookup(Lemon)).Error.Code.ShouldBe("Material.NotFound");
+        formula.Compose().Value.CostPerKg(Lookup(Lemon), Money.Zero).Error.Code.ShouldBe("Material.NotFound");
     }
 
     private static Formula NewFormula() => Formula.Create("Test formula").Value;
+
+    [Fact]
+    public void Compose_freezes_the_neat_fractions_and_the_solvent_share()
+    {
+        var formula = NewFormula();
+        formula.AddLine(Bergamot, Parts(10m));
+        formula.AddLine(RoseOtto, Parts(10m), Percent(10m));
+
+        var composition = formula.Compose().Value;
+        formula.AdjustParts(Bergamot.Id, Parts(90m));
+
+        composition.Lines.ShouldBe([new CompositionLine(Bergamot.Id, 0.5m), new CompositionLine(RoseOtto.Id, 0.05m)]);
+        composition.SolventFraction.ShouldBe(0.45m);
+        formula.Compose().Value.ShouldNotBe(composition);
+    }
+
+    [Fact]
+    public void An_empty_formula_cannot_be_composed()
+    {
+        NewFormula().Compose().Error.ShouldBe(FormulaErrors.EmptyFormula);
+    }
+
+    [Fact]
+    public void Composition_rejects_bad_fractions_and_duplicates()
+    {
+        Composition.Create([]).Error.ShouldBe(FormulaErrors.EmptyFormula);
+        Composition.Create([new CompositionLine(Bergamot.Id, 0m)]).Error.ShouldBe(CompositionErrors.FractionOutOfRange);
+        Composition.Create([new CompositionLine(Bergamot.Id, 0.7m), new CompositionLine(Lemon.Id, 0.7m)])
+            .Error.ShouldBe(CompositionErrors.FractionsExceedWhole);
+        Composition.Create([new CompositionLine(Bergamot.Id, 0.2m), new CompositionLine(Bergamot.Id, 0.2m)])
+            .Error.ShouldBe(CompositionErrors.DuplicateMaterial);
+    }
+
+    [Fact]
+    public void A_formula_survives_a_snapshot_round_trip()
+    {
+        var formula = NewFormula();
+        formula.AddLine(Bergamot, Parts(10m));
+        formula.AddLine(RoseOtto, Parts(2.5m), Percent(10m));
+
+        var restored = Formula.Restore(formula.ToSnapshot()).Value;
+
+        restored.Id.ShouldBe(formula.Id);
+        restored.Name.ShouldBe(formula.Name);
+        restored.Revision.ShouldBe(3);
+        restored.Compose().Value.ShouldBe(formula.Compose().Value);
+        restored.DomainEvents.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Restore_re_checks_the_invariants()
+    {
+        var snapshot = NewFormula().ToSnapshot();
+        var line = new FormulaLineSnapshot(Bergamot.Id.Value, 10m, 1m);
+
+        Formula.Restore(snapshot with { Name = " " }).Error.ShouldBe(FormulaErrors.NameRequired);
+        Formula.Restore(snapshot with { Revision = 0 }).Error.ShouldBe(FormulaErrors.InvalidRevision);
+        Formula.Restore(snapshot with { Lines = [line, line] }).Error.Code.ShouldBe("Formula.MaterialAlreadyPresent");
+        Formula.Restore(snapshot with { Lines = [line with { Parts = 0m }] }).Error.ShouldBe(PartsErrors.OutOfRange);
+        Formula.Restore(snapshot with { Lines = [line with { DilutionFraction = 2m }] }).Error.ShouldBe(DilutionErrors.OutOfRange);
+        Formula.Restore(snapshot with { Lines = [line with { MaterialId = "Not A Slug" }] }).Error.ShouldBe(MaterialErrors.IdMalformed);
+    }
 }

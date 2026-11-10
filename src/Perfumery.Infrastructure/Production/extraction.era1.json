@@ -1,0 +1,8 @@
+[
+  { "id": "distil-lavender", "output": "lavender-haute-provence", "method": "steamDistillation", "rawBotanical": "lavender-flowering-tops", "spiritPerKgRaw": 0, "yieldKgPerKgRaw": 0.010, "durationMinutes": 20, "equipment": "still" },
+  { "id": "distil-rosemary", "output": "rosemary-dalmatia", "method": "steamDistillation", "rawBotanical": "rosemary-flowering-tops", "spiritPerKgRaw": 0, "yieldKgPerKgRaw": 0.010, "durationMinutes": 20, "equipment": "still" },
+  { "id": "distil-petitgrain", "output": "petitgrain-bigarade", "method": "steamDistillation", "rawBotanical": "bitter-orange-leaves", "spiritPerKgRaw": 0, "yieldKgPerKgRaw": 0.003, "durationMinutes": 20, "equipment": "still" },
+  { "id": "distil-neroli", "output": "neroli-vallauris", "method": "steamDistillation", "rawBotanical": "bitter-orange-blossom", "spiritPerKgRaw": 0, "yieldKgPerKgRaw": 0.001, "durationMinutes": 20, "equipment": "still" },
+  { "id": "tincture-benzoin", "output": "benzoin-tincture-siam", "method": "tincture", "rawBotanical": "benzoin-resin", "spiritPerKgRaw": 5, "yieldKgPerKgRaw": 5, "durationMinutes": 180, "equipment": "tinctureJar" },
+  { "id": "tincture-tonka", "output": "tonka-bean-tincture-venezuela", "method": "tincture", "rawBotanical": "tonka-beans", "spiritPerKgRaw": 8, "yieldKgPerKgRaw": 8, "durationMinutes": 180, "equipment": "tinctureJar" }
+]

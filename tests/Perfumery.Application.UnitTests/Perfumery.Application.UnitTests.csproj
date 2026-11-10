@@ -3,5 +3,6 @@
     <ProjectReference Include="..\..\src\Perfumery.Application\Perfumery.Application.csproj" />
     <PackageReference Include="NSubstitute" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
   </ItemGroup>
 </Project>

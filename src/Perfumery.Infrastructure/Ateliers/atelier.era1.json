@@ -1,0 +1,11 @@
+{
+  "startingCapital": 5000,
+  "filterLoss": 0.02,
+  "timeScale": 1,
+  "concentrateMaturationMinutes": 15,
+  "equipment": {
+    "still": { "count": 1, "capacityKg": 100 },
+    "tinctureJar": { "count": 2, "capacityKg": 10 },
+    "macerationVessel": { "count": 3, "capacityKg": 20 }
+  }
+}

@@ -19,6 +19,17 @@ internal sealed class FakeMaterialCatalog : IMaterialCatalog
         Build(SandalwoodId, "Sandalwood oil", ExtractionMethod.SteamDistillation, 0.8, 80.0, 150m, 100m, (Facet.Woody, 0.9), (Facet.Balsamic, 0.5)),
     ];
 
+    public const string LavenderId = "lavender-haute-provence";
+
+    /// <summary>The same catalog plus lavender oil, which the fake extraction recipe makes.</summary>
+    public static FakeMaterialCatalog WithLavender()
+    {
+        var catalog = new FakeMaterialCatalog();
+        catalog._materials.Add(Build(
+            LavenderId, "Lavender oil", ExtractionMethod.SteamDistillation, 1.1, 1.7, 35m, 100m, (Facet.Aromatic, 0.8), (Facet.Floral, 0.5)));
+        return catalog;
+    }
+
     public IReadOnlyList<Material> GetAll() => _materials;
 
     public Material? Find(MaterialId id) => _materials.Find(material => material.Id == id);

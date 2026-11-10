@@ -38,6 +38,20 @@ public class Result : IFailureFactory<Result>
 
     public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
 
+    /// <summary>The error of the first failed result, or null if all succeeded.</summary>
+    public static Error? FirstFailure(params ReadOnlySpan<Result> results)
+    {
+        foreach (var result in results)
+        {
+            if (result.IsFailure)
+            {
+                return result.Error;
+            }
+        }
+
+        return null;
+    }
+
     static Result IFailureFactory<Result>.FromError(Error error) => Failure(error);
 
     public static implicit operator Result(Error error) => Failure(error);

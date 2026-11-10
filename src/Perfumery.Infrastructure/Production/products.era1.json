@@ -1,0 +1,5 @@
+[
+  { "id": "eau-de-cologne", "name": "Eau de Cologne", "minConcentrationPercent": 2, "maxConcentrationPercent": 5, "defaultConcentrationPercent": 3, "macerationMinutes": 30, "flacon": "flacon-cologne-200g", "flaconFillGrams": 200 },
+  { "id": "toilet-water", "name": "Toilet water", "minConcentrationPercent": 5, "maxConcentrationPercent": 10, "defaultConcentrationPercent": 7, "macerationMinutes": 60, "flacon": "flacon-toilet-water-100g", "flaconFillGrams": 100 },
+  { "id": "extrait", "name": "Extrait", "minConcentrationPercent": 15, "maxConcentrationPercent": 30, "defaultConcentrationPercent": 20, "macerationMinutes": 180, "flacon": "flacon-extrait-30g", "flaconFillGrams": 30 }
+]

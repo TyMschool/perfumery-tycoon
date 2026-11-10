@@ -3,7 +3,7 @@ namespace Perfumery.Application.Formulas.EvaluateFormula;
 /// <param name="FormulaId">The evaluated formula.</param>
 /// <param name="FormulaName">Its name.</param>
 /// <param name="Revision">The revision that was evaluated.</param>
-/// <param name="CostPerKgOfConcentrate">Material cost of one kilogram of concentrate.</param>
+/// <param name="CostPerKgOfConcentrate">Cost of one kilogram of concentrate at catalog prices, carrier spirit included.</param>
 /// <param name="SolventFraction">Carrier share of the concentrate, 0 to 1.</param>
 /// <param name="Checkpoints">The blend on a blotter at each checkpoint, earliest first.</param>
 public sealed record ScentProfileResponse(
